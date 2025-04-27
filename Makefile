@@ -6,7 +6,7 @@ NAME = libft_malloc_$(HOSTTYPE).so
 LINK = libft_malloc.so
 
 CC = clang
-CCFLAGS = -Wall -Wextra -Werror -fPIC -Ilibft/inc -Isrc/inc
+CCFLAGS = -Wall -Wextra -Werror -fPIC -MMD -Ilibft/inc -Isrc/inc
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
@@ -29,6 +29,8 @@ LIBFT = $(LIBFT_DIR)/libft.a
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CCFLAGS) -c $< -o $@
+
+-include $(OBJS:.o=.d)
 
 all: $(LIBFT) $(NAME) $(LINK)
 
