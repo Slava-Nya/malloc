@@ -17,17 +17,19 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CCFLAGS) -c $< -o $@
 
-all: $(NAME)
+all:
+	$(MAKE) -C ..
+	$(MAKE) $(NAME)
+
+$(NAME): $(OBJ) $(LIBFT_MALLOC) $(LIBFT)
+	$(CC) $(CCFLAGS) -o $(NAME) $(OBJ) $(LIBFT_MALLOC) $(LIBFT)
 
 run: all
 ifeq ($(shell uname), Darwin)
 	DYLD_LIBRARY_PATH=.. ./$(NAME)
 else
-	LD_PRELOAD=../$(NAME) ./$(NAME)
+	LD_PRELOAD=$(LIBFT_MALLOC) ./$(NAME)
 endif
-
-$(NAME): $(OBJ) $(LIBFT_MALLOC) $(LIBFT)
-	$(CC) $(CCFLAGS) -o $(NAME) $(OBJ) $(LIBFT_MALLOC) $(LIBFT)
 
 clean:
 	rm -rf $(OBJ_DIR)
@@ -37,4 +39,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re run
