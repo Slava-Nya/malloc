@@ -1,0 +1,19 @@
+# compiled objects
+*.o
+*.d
+
+# build directories
+obj/
+test/obj/
+
+# binaries
+libft_malloc_*.so
+libft_malloc.so
+test/test_malloc
+
+# libraries
+libft/libft.a
+
+# clion meta
+.idea/
+cmake-build-debug/

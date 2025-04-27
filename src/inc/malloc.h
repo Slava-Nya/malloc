@@ -17,9 +17,9 @@ typedef enum e_zone_type {
     ZONE_TINY,
     ZONE_SMALL,
     ZONE_LARGE
-} zone_type_t;
+}           zone_type_t;
 
-
+# define TINY_HEAP_ALLOCATION_SIZE (4 * getpagesize())
 
 void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);

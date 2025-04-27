@@ -11,7 +11,7 @@ CCFLAGS = -Wall -Wextra -Werror -fPIC -MMD -Ilibft/inc -Isrc/inc
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
 	CCFLAGS += -D DARWIN
-	LDFLAGS = -dynamiclib
+	LDFLAGS += -dynamiclib -install_name @rpath/$(NAME)
 else
 	CCFLAGS += -D LINUX
 	LDFLAGS = -shared
@@ -34,6 +34,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 all: $(LIBFT) $(NAME) $(LINK)
 
+test: all
+	$(MAKE) -C test run
+
 $(LIBFT):
 	@echo "=== calling libft make ==="
 	@$(MAKE) -C $(LIBFT_DIR) --debug=b
@@ -50,8 +53,9 @@ clean:
 
 fclean: clean
 	rm -f $(NAME) $(LINK)
-	@$(MAKE) -C $(LIBFT_DIR) fclean
+	$(MAKE) -C $(LIBFT_DIR) fclean
+	$(MAKE) -C test fclean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re test
