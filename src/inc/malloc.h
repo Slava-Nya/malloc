@@ -39,7 +39,7 @@ typedef enum e_zone_type {
 typedef struct chunk {
     struct chunk* next;      // next chunk in the list
     struct chunk* prev;      // previous chunk in the list
-    bool free;                // 1 if free, 0 if used
+    char free;                // 1 if free, 0 if used
 } chunk_t;
 
 
@@ -48,7 +48,7 @@ typedef struct zone {
     struct zone* next;       // next zone of the same type
     struct chunk* head;      // head of the chunk list
     struct chunk* tail;      // tail of the chunk list
-    int type;                // type of the zone (TINY, SMALL)
+    zone_type_t type;              // type of the zone (TINY, SMALL)
     pthread_mutex_t lock;    // mutex for thread safety
 } zone_t;
 
