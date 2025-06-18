@@ -27,15 +27,13 @@ LIBFT_DIR = libft
 LIBFT = $(LIBFT_DIR)/libft.a
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo "Recompiling $<"
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CCFLAGS) -c $< -o $@
 
 -include $(OBJS:.o=.d)
 
 all: $(LIBFT) $(NAME) $(LINK)
-
-test: all
-	$(MAKE) -C test run
 
 $(LIBFT):
 	@echo "=== calling libft make ==="
@@ -54,8 +52,7 @@ clean:
 fclean: clean
 	rm -f $(NAME) $(LINK)
 	$(MAKE) -C $(LIBFT_DIR) fclean
-	$(MAKE) -C test fclean
 
 re: fclean all
 
-.PHONY: all clean fclean re test
+.PHONY: all clean fclean re

@@ -3,7 +3,7 @@
 
 
 /**
- * Move tiny/small chunk to the end of its zone's list and mark as free.
+ * dsMove tiny/small chunk to the end of its zone's list and mark as free.
  */
 static void free_small_chunk(chunk_t* chunk) {
     zone_t* zone = chunk->zone;
@@ -32,6 +32,10 @@ static void free_small_chunk(chunk_t* chunk) {
     zone->tail = chunk;
 }
 
+/**
+ * Free a large chunk by unlinking it from the zone's list
+ * and unmapping the entire memory region allocated via mmap.
+ */
 static void free_large_chunk(chunk_t* chunk) {
     zone_t* zone = chunk->zone;
 
@@ -50,12 +54,23 @@ static void free_large_chunk(chunk_t* chunk) {
 
 /**
  * Public free
+ *
+ * Frees a previously allocated memory block.
+ * Determines the chunk type from metadata and dispatches
+ * to the appropriate free routine (small/tiny or large).
+ *
+ * If the pointer is NULL, the function does nothing.
  */
 void free(void* ptr) {
-    if (!ptr)
-        return;
-
-    chunk_t *chunk = (chunk_t *) ptr - 1;
+    chunk_t *chunk = find_valid_chunk(ptr);
+    if (!chunk) {
+        ft_putstr_fd("free(): invalid pointer\n", 2);
+        abort();
+    }
+    if (chunk->free) {
+        ft_putstr_fd("free(): double free detected\n", 2);
+        abort();
+    }
 
     if (chunk->type == ZONE_LARGE)
         free_large_chunk(chunk);

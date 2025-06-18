@@ -17,11 +17,10 @@
 /*
 ** For a pagesize of 16384 bytes
 **
-** TINY  - block < 128 bytes  - heap 64 KB
-** SMALL - block < 1024 bytes - heap 512 KB
-** LARGE - block > 1024 bytes
+** TINY  - chunk < 128 bytes  - zone 64 KB
+** SMALL - chunk < 1024 bytes - zone 512 KB
+** LARGE - chunk > 1024 bytes
 */
-
 # define TINY_ZONE_ALLOCATION_SIZE ((size_t)(4 * getpagesize()))
 # define TINY_CHUNK_SIZE (TINY_ZONE_ALLOCATION_SIZE / 128)
 
@@ -30,6 +29,9 @@
 
 # define IS_TINY(size)   ((size) <= (size_t)TINY_CHUNK_SIZE)
 # define IS_SMALL(size)  ((size) <= (size_t)SMALL_CHUNK_SIZE && (size) > (size_t)TINY_CHUNK_SIZE)
+
+#define ZONE_SIZE(type) ((type) == ZONE_TINY ? TINY_ZONE_ALLOCATION_SIZE : SMALL_ZONE_ALLOCATION_SIZE)
+#define CHUNK_SIZE(type) ((type) == ZONE_TINY ? TINY_CHUNK_SIZE : SMALL_CHUNK_SIZE)
 
 typedef enum e_zone_type {
     ZONE_TINY = 0,
@@ -71,5 +73,6 @@ void *calloc(size_t count, size_t size);
 void free(void *ptr);
 
 void show_alloc_mem(void);
+chunk_t* find_valid_chunk(void* ptr);
 
 #endif

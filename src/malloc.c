@@ -1,11 +1,17 @@
 #include "malloc.h"
-#include "libft.h"
+#include <stdio.h>
 
-/* Initialize all chunks inside the zone */
-static void initialize_zone_chunks(zone_t* zone, size_t zone_size, size_t chunk_size, zone_type_t zone_type) {
+/**
+ * Initialize all chunks inside the zone.
+ *
+ * This function splits the allocated memory region (zone) into
+ * fixed-size chunks of `chunk_t + CHUNK_SIZE(type)` size and
+ * links them into a doubly-linked list.
+ */
+static void initialize_zone_chunks(zone_t* zone, zone_type_t zone_type) {
     size_t header_size = sizeof(zone_t);
-    size_t chunk_total = sizeof(chunk_t) + chunk_size;
-    size_t max_chunks = (zone_size - header_size) / chunk_total;
+    size_t chunk_total = sizeof(chunk_t) + CHUNK_SIZE(zone_type);
+    size_t max_chunks = (ZONE_SIZE(zone_type) - header_size) / chunk_total;
 
     char* base = (char*)zone + header_size;
     chunk_t* prev = NULL;
@@ -14,7 +20,7 @@ static void initialize_zone_chunks(zone_t* zone, size_t zone_size, size_t chunk_
         chunk_t* chunk = (chunk_t*)(base + i * chunk_total);
         chunk->free = true;
         chunk->type = zone_type;
-        chunk->size = chunk_size;
+        chunk->size = 0;
         chunk->prev = prev;
         chunk->next = NULL;
         chunk->zone = zone;
@@ -32,7 +38,9 @@ static void initialize_zone_chunks(zone_t* zone, size_t zone_size, size_t chunk_
 
 /**
  * Search through all zones of the given type for a free chunk.
- * If found, move the chunk to the head (mark as used) and return it.
+ *
+ * Returns the last free chunk in the most recently used zone
+ * and moves it to the head of the list to mark it as used.
  */
 static chunk_t* get_free_chunk(zone_t* zone_list) {
     zone_t* zone = zone_list;
@@ -41,14 +49,12 @@ static chunk_t* get_free_chunk(zone_t* zone_list) {
         if (zone->tail && zone->tail->free) {
             chunk_t* chunk = zone->tail;
 
-            // Remove chunk from the end (tail)
             zone->tail = chunk->prev;
             if (zone->tail)
                 zone->tail->next = NULL;
             else
                 zone->head = NULL;
 
-            // Insert chunk at the front (head), mark as used
             chunk->prev = NULL;
             chunk->next = zone->head;
             if (zone->head)
@@ -58,29 +64,43 @@ static chunk_t* get_free_chunk(zone_t* zone_list) {
             chunk->free = false;
             return chunk;
         }
-        zone = zone->next; // Go to the next zone
+        zone = zone->next;
     }
 
-    return NULL; // No free chunk available
+    return NULL;
 }
 
-/* Allocate a new zone using mmap */
+/**
+ * Allocate a new zone using mmap.
+ *
+ * The returned memory will contain zone metadata followed by
+ * space for fixed-size chunks. Returns NULL on failure.
+ */
 static zone_t* create_zone(size_t zone_size) {
     void* ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (ptr == MAP_FAILED)
-        return NULL;
+    if (ptr == MAP_FAILED) {
+        ft_putstr_fd("malloc(): mmap failed\n", 2);
+        abort();
+    }
 
     zone_t* zone = (zone_t*)ptr;
     ft_bzero(zone, sizeof(zone_t));
     return zone;
 }
 
-/* Handle large allocations with mmap and track in large zone */
-static chunk_t * large_alloc(size_t size) {
+/**
+ * Handle large allocations via mmap and insert into large zone list.
+ *
+ * Each large allocation gets its own mapping and chunk metadata.
+ * It is inserted at the head of the linked list in the large zone.
+ */
+static chunk_t* large_alloc(size_t size) {
     size_t total_size = sizeof(chunk_t) + size;
     void* ptr = mmap(NULL, total_size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (ptr == MAP_FAILED)
-        return NULL;
+    if (ptr == MAP_FAILED) {
+        ft_putstr_fd("malloc(): mmap failed\n", 2);
+        abort();
+    }
 
     chunk_t* chunk = (chunk_t*)ptr;
     ft_bzero(chunk, sizeof(chunk_t));
@@ -103,40 +123,50 @@ static chunk_t * large_alloc(size_t size) {
     return chunk;
 }
 
-/* Internal malloc logic for tiny and small */
-static chunk_t * alloc(zone_type_t zone_type, size_t zone_size, size_t chunk_size) {
-    chunk_t* chunk = NULL;
+/**
+ * Internal allocator for TINY and SMALL zones.
+ *
+ * Attempts to get a free chunk. If no chunks are available,
+ * creates a new zone and retries.
+ */
+static chunk_t* alloc(zone_type_t zone_type) {
     zone_t** zone_list = &g_malloc[zone_type].zones;
 
-    chunk = get_free_chunk(*zone_list);
+    chunk_t* chunk = get_free_chunk(*zone_list);
     if (!chunk) {
-        zone_t* new_zone = create_zone(zone_size);
-        initialize_zone_chunks(new_zone, zone_size, chunk_size, zone_type);
+        zone_t* new_zone = create_zone(ZONE_SIZE(zone_type));
+        initialize_zone_chunks(new_zone, zone_type);
         new_zone->next = *zone_list;
         *zone_list = new_zone;
         chunk = get_free_chunk(new_zone);
     }
 
     return chunk;
-
 }
 
-/* Public malloc */
+/**
+ * Public malloc
+ *
+ * Returns a user-usable pointer to an allocated chunk.
+ * Chooses zone type based on size and either reuses a chunk
+ * or creates a new one if necessary.
+ */
 void* malloc(size_t size) {
-    chunk_t *chunk = NULL;
-
     if (size == 0)
         return NULL;
 
+    chunk_t* chunk = NULL;
+
     if (IS_TINY(size))
-        chunk = alloc(ZONE_TINY, TINY_ZONE_ALLOCATION_SIZE, TINY_CHUNK_SIZE);
+        chunk = alloc(ZONE_TINY);
     else if (IS_SMALL(size))
-        chunk = alloc(ZONE_SMALL, SMALL_ZONE_ALLOCATION_SIZE, SMALL_CHUNK_SIZE);
+        chunk = alloc(ZONE_SMALL);
     else
         chunk = large_alloc(size);
+
     if (!chunk)
         return NULL;
-    chunk->size = size;
 
+    chunk->size = size;
     return (void*)(chunk + 1);
 }

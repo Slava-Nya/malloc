@@ -1,5 +1,14 @@
 #include "malloc.h"
 
+/**
+ *
+ * Allocate zero-initialized memory for an array of elements.
+ *
+ * This function allocates memory for an array of `count` elements,
+ * each of size `size` bytes, and sets the allocated memory to zero.
+ * It performs an overflow check on the multiplication to avoid
+ * undefined behavior for very large values.
+ */
 void* calloc(size_t count, size_t size) {
     size_t total_size = count * size;
 
