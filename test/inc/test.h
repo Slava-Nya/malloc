@@ -3,7 +3,6 @@
 
 #include "malloc.h"
 
-int main();
-void test_main(void);
+int main(void);
 
 #endif

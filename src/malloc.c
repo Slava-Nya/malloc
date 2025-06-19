@@ -1,5 +1,16 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   malloc.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: hlorrine <hlorrine@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/07 23:51:34 by hlorrine          #+#    #+#             */
+/*   Updated: 2025/06/19 18:50:41 by hlorrine         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "malloc.h"
-#include <stdio.h>
 
 /**
  * Initialize all chunks inside the zone.
@@ -16,7 +27,7 @@ static void initialize_zone_chunks(zone_t* zone, zone_type_t zone_type) {
     char* base = (char*)zone + header_size;
     chunk_t* prev = NULL;
 
-    for (size_t i = 0; i < max_chunks; i++) {
+    for (size_t i = 1; i < max_chunks; i++) {
         chunk_t* chunk = (chunk_t*)(base + i * chunk_total);
         chunk->free = true;
         chunk->type = zone_type;

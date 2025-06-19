@@ -1,5 +1,4 @@
 #include "malloc.h"
-#include <stdio.h>
 
 /**
  * Show current memory allocations by zone type.

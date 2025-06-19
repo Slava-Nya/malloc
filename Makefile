@@ -1,58 +1,66 @@
+# Architecture detection
 ifeq ($(HOSTTYPE),)
 HOSTTYPE := $(shell uname -m)_$(shell uname -s)
 endif
 
-NAME = libft_malloc_$(HOSTTYPE).so
-LINK = libft_malloc.so
+NAME := libft_malloc_$(HOSTTYPE).so
+LINK := libft_malloc.so
 
-CC = clang
-CCFLAGS = -Wall -Wextra -Werror -fPIC -MMD -Ilibft/inc -Isrc/inc
+SRC_DIR := src
+OBJ_DIR := obj
+INC_DIR := src/inc
+LIBFT_DIR := libft
 
-UNAME := $(shell uname)
+CC := clang
+CFLAGS := -Wall -Wextra -Werror -fPIC -MMD -I$(INC_DIR) -I$(LIBFT_DIR)/inc
+
 ifeq ($(UNAME), Darwin)
-	CCFLAGS += -D DARWIN
-	LDFLAGS += -dynamiclib -install_name @rpath/$(NAME)
+    CFLAGS += -D DARWIN
+    LDFLAGS := -dynamiclib -install_name @rpath/$(NAME)
 else
-	CCFLAGS += -D LINUX
-	LDFLAGS = -shared
+    CFLAGS += -D LINUX
+    LDFLAGS := -shared
 endif
 
-SRC_DIR = src
-OBJ_DIR = obj
+SRCS := $(wildcard $(SRC_DIR)/*.c)
+OBJS := $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
 
-SRCS = $(wildcard $(SRC_DIR)/*.c)
-OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+# Libft static lib
+LIBFT := $(LIBFT_DIR)/libft.a
 
-LIBFT_DIR = libft
-LIBFT = $(LIBFT_DIR)/libft.a
+all: $(LINK)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@echo "Recompiling $<"
-	@mkdir -p $(OBJ_DIR)
-	$(CC) $(CCFLAGS) -c $< -o $@
+# Link final shared library
+$(NAME): $(OBJS) $(LIBFT)
+	@echo "=== Linking $(NAME) ==="
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBFT) -o $(NAME)
 
--include $(OBJS:.o=.d)
-
-all: $(LIBFT) $(NAME) $(LINK)
-
-$(LIBFT):
-	@echo "=== calling libft make ==="
-	@$(MAKE) -C $(LIBFT_DIR) --debug=b
-
-$(NAME): $(OBJS)
-	$(CC) $(CCFLAGS) $(LDFLAGS) $(OBJS) $(LIBFT) -o $(NAME)
-
+# Create symbolic link
 $(LINK): $(NAME)
 	ln -sf $(NAME) $(LINK)
 
+# Compile source files to object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
+	@echo "Compiling $<"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Build libft
+$(LIBFT):
+	@echo "=== calling libft make ==="
+	$(MAKE) -C $(LIBFT_DIR)
+
+# Clean rules
 clean:
 	rm -rf $(OBJ_DIR)
-	@$(MAKE) -C $(LIBFT_DIR) clean
 
 fclean: clean
 	rm -f $(NAME) $(LINK)
 	$(MAKE) -C $(LIBFT_DIR) fclean
 
 re: fclean all
+
+-include $(DEPS)
 
 .PHONY: all clean fclean re

@@ -5,14 +5,9 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/mman.h>
-#include <unistd.h>
-#include <signal.h>
 
 #include "libft.h"
-
 
 /*
 ** For a pagesize of 16384 bytes
