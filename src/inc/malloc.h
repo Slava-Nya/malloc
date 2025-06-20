@@ -16,14 +16,14 @@
 ** SMALL - chunk < 1024 bytes - zone 512 KB
 ** LARGE - chunk > 1024 bytes
 */
-# define TINY_ZONE_ALLOCATION_SIZE ((size_t)(4 * getpagesize()))
-# define TINY_CHUNK_SIZE (TINY_ZONE_ALLOCATION_SIZE / 128)
+#define TINY_ZONE_ALLOCATION_SIZE ((size_t)(4 * getpagesize()))
+#define TINY_CHUNK_SIZE (TINY_ZONE_ALLOCATION_SIZE / 128)
 
-# define SMALL_ZONE_ALLOCATION_SIZE ((size_t)(32 * getpagesize()))
-# define SMALL_CHUNK_SIZE (SMALL_ZONE_ALLOCATION_SIZE / 128)
+#define SMALL_ZONE_ALLOCATION_SIZE ((size_t)(32 * getpagesize()))
+#define SMALL_CHUNK_SIZE (SMALL_ZONE_ALLOCATION_SIZE / 128)
 
-# define IS_TINY(size)   ((size) <= (size_t)TINY_CHUNK_SIZE)
-# define IS_SMALL(size)  ((size) <= (size_t)SMALL_CHUNK_SIZE && (size) > (size_t)TINY_CHUNK_SIZE)
+#define IS_TINY(size)   ((size) <= (size_t)TINY_CHUNK_SIZE)
+#define IS_SMALL(size)  ((size) <= (size_t)SMALL_CHUNK_SIZE && (size) > (size_t)TINY_CHUNK_SIZE)
 
 #define ZONE_SIZE(type) ((type) == ZONE_TINY ? TINY_ZONE_ALLOCATION_SIZE : SMALL_ZONE_ALLOCATION_SIZE)
 #define CHUNK_SIZE(type) ((type) == ZONE_TINY ? TINY_CHUNK_SIZE : SMALL_CHUNK_SIZE)
@@ -38,7 +38,7 @@ typedef enum e_zone_type {
 typedef struct chunk {
     struct chunk*    next;   // next chunk in the list
     struct chunk*    prev;   // previous chunk in the list
-    struct zone*     zone;    // link back to parent zone
+    struct zone*     zone;   // link back to parent zone
     bool             free;   // only meaningful for tiny/small
     zone_type_t      type;   // ZONE_TINY / ZONE_SMALL / ZONE_LARGE
     size_t           size;   // only used for large (user-requested size)
@@ -50,16 +50,10 @@ typedef struct zone {
     struct zone*     next;   // next zone of the same type
     chunk_t*         head;   // first chunk in the list
     chunk_t*         tail;   // last chunk in the list
-    pthread_mutex_t  lock;   // for thread-safe operations
 } zone_t;
 
-// Global allocator state: two classes, accessed as g_malloc
-typedef struct malloc_state {
-    zone_t* zones;
-} malloc_state_t;
 
-malloc_state_t g_malloc[3];  // [ZONE_TINY], [ZONE_SMALL], [ZONE_LARGE]
-
+extern struct zone *g_malloc[3];
 
 // Malloc API
 void *malloc(size_t size);

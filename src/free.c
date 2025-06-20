@@ -3,7 +3,7 @@
 /**
  * dsMove tiny/small chunk to the end of its zone's list and mark as free.
  */
-static void free_small_chunk(chunk_t* chunk) {
+static void free_chunk(chunk_t* chunk) {
     zone_t* zone = chunk->zone;
 
     // Remove from current position
@@ -73,5 +73,5 @@ void free(void* ptr) {
     if (chunk->type == ZONE_LARGE)
         free_large_chunk(chunk);
     else
-        free_small_chunk(chunk);
+        free_chunk(chunk);
 }

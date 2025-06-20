@@ -27,7 +27,7 @@ static void initialize_zone_chunks(zone_t* zone, zone_type_t zone_type) {
     char* base = (char*)zone + header_size;
     chunk_t* prev = NULL;
 
-    for (size_t i = 1; i < max_chunks; i++) {
+    for (size_t i = 0; i < max_chunks; i++) {
         chunk_t* chunk = (chunk_t*)(base + i * chunk_total);
         chunk->free = true;
         chunk->type = zone_type;
@@ -118,11 +118,11 @@ static chunk_t* large_alloc(size_t size) {
     chunk->type = ZONE_LARGE;
     chunk->size = size;
 
-    zone_t* zone = g_malloc[ZONE_LARGE].zones;
+    zone_t* zone = g_malloc[ZONE_LARGE];
     if (!zone) {
         zone = create_zone(sizeof(zone_t));
         zone->head = zone->tail = chunk;
-        g_malloc[ZONE_LARGE].zones = zone;
+        g_malloc[ZONE_LARGE] = zone;
     } else {
         chunk->next = zone->head;
         if (zone->head)
@@ -141,14 +141,14 @@ static chunk_t* large_alloc(size_t size) {
  * creates a new zone and retries.
  */
 static chunk_t* alloc(zone_type_t zone_type) {
-    zone_t** zone_list = &g_malloc[zone_type].zones;
+    zone_t* zone_list = g_malloc[zone_type];
 
-    chunk_t* chunk = get_free_chunk(*zone_list);
+    chunk_t* chunk = get_free_chunk(zone_list);
     if (!chunk) {
         zone_t* new_zone = create_zone(ZONE_SIZE(zone_type));
         initialize_zone_chunks(new_zone, zone_type);
-        new_zone->next = *zone_list;
-        *zone_list = new_zone;
+        new_zone->next = zone_list;
+        g_malloc[zone_type] = new_zone;
         chunk = get_free_chunk(new_zone);
     }
 

@@ -17,3 +17,5 @@ libft/libft.a
 # clion meta
 .idea/
 cmake-build-debug/
+
+run.sh

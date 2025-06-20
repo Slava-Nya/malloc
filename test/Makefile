@@ -1,4 +1,5 @@
 NAME := test_exec
+
 SRC_DIR := src
 OBJ_DIR := obj
 INC_DIR := inc
@@ -9,31 +10,24 @@ DEPS := $(OBJS:.o=.d)
 
 CC := clang
 CFLAGS := -Wall -Wextra -Werror -I$(INC_DIR) -I../src/inc -I../libft/inc
-LDFLAGS := -L.. -lft_malloc
+LD_PRELOAD_LIB := ../libft_malloc.so
 
-UNAME := $(shell uname)
+all: test
 
-test: build_malloc $(NAME)
-ifeq ($(UNAME), Darwin)
-	@echo "Running with DYLD_INSERT_LIBRARIES..."
-	DYLD_FORCE_FLAT_NAMESPACE=1 DYLD_INSERT_LIBRARIES=../libft_malloc.so ./$(NAME)
-else
-	@echo "Running with LD_PRELOAD..."
-	LD_PRELOAD=../libft_malloc.so ./$(NAME)
-endif
+# Build malloc lib from parent dir before test
+test: $(NAME)
+	LD_LIBRARY_PATH=.. LD_PRELOAD=../libft_malloc.so ./$(NAME)
 
-build_malloc:
-	@echo "=== Building malloc lib ==="
-	@$(MAKE) -C ..
-
+# Object file rule
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_DIR)
 	@echo "Compiling $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Link test_exec without linking malloc lib (uses LD_PRELOAD instead)
 $(NAME): $(OBJS)
-	@echo "Linking test_exec"
-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(NAME)
+	@echo "Linking $(NAME)"
+	$(CC) -L.. -l:libft_malloc.so $(CFLAGS) $(OBJS) -o $(NAME)
 
 clean:
 	rm -rf $(OBJ_DIR)
@@ -41,8 +35,8 @@ clean:
 fclean: clean
 	rm -f $(NAME)
 
-re: fclean test
+re: fclean all
 
 -include $(DEPS)
 
-.PHONY: test build_malloc clean fclean re
+.PHONY: all test clean fclean re

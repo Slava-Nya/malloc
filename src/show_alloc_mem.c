@@ -16,7 +16,7 @@ void show_alloc_mem(void) {
     size_t total = 0;
 
     for (int type = 0; type <= ZONE_LARGE; type++) {
-        zone_t* zone = g_malloc[type].zones;
+        zone_t* zone = g_malloc[type];
 
         while (zone) {
             ft_putstr_fd((char *)zone_names[type], 1);
